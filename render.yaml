@@ -35,7 +35,6 @@ services:
     dockerfilePath: services/tts-service/Dockerfile
     plan: free
 
-  # FIXED: background → worker
   - type: worker
     name: forced-aligner
     env: docker
