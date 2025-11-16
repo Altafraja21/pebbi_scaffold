@@ -1,3 +1,5 @@
+name: pebbi-platform
+
 services:
   - type: web
     name: backend
