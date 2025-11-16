@@ -1,47 +1,64 @@
-name: pebbi-platform
-
 services:
   - type: web
     name: backend
     env: docker
     dockerfilePath: services/backend/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 8000
 
   - type: web
     name: real-time-engine
     env: docker
     dockerfilePath: services/real-time-engine/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 3000
 
   - type: web
     name: ai-engine
     env: docker
     dockerfilePath: services/ai-engine/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 5001
 
   - type: web
     name: memory-service
     env: docker
     dockerfilePath: services/memory-service/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 4000
 
   - type: web
     name: stt-service
     env: docker
     dockerfilePath: services/stt-service/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 7000
 
   - type: web
     name: tts-service
     env: docker
     dockerfilePath: services/tts-service/Dockerfile
     plan: free
+    envVars: []
+    ports:
+      - port: 6000
 
   - type: worker
     name: forced-aligner
     env: docker
     dockerfilePath: services/forced-aligner/Dockerfile
     plan: free
+    envVars: []
 
 databases:
   - name: pebbi-db
