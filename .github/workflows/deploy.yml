@@ -1,0 +1,45 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to container registry
+      run: |
+        echo $CR_PAT | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+    - name: Build images
+      run: |
+        docker build -t ghcr.io/${{ github.repository }}/backend:latest services/backend
+        docker build -t ghcr.io/${{ github.repository }}/ai-engine:latest services/ai-engine
+        docker build -t ghcr.io/${{ github.repository }}/memory-service:latest services/memory-service
+        docker build -t ghcr.io/${{ github.repository }}/real-time-engine:latest services/real-time-engine
+        docker build -t ghcr.io/${{ github.repository }}/stt-service:latest services/stt-service
+        docker build -t ghcr.io/${{ github.repository }}/tts-service:latest services/tts-service
+        docker build -t ghcr.io/${{ github.repository }}/forced-aligner:latest services/forced-aligner
+
+    - name: Push images
+      run: |
+        docker push ghcr.io/${{ github.repository }}/backend:latest
+        docker push ghcr.io/${{ github.repository }}/ai-engine:latest
+        docker push ghcr.io/${{ github.repository }}/memory-service:latest
+        docker push ghcr.io/${{ github.repository }}/real-time-engine:latest
+        docker push ghcr.io/${{ github.repository }}/stt-service:latest
+        docker push ghcr.io/${{ github.repository }}/tts-service:latest
+        docker push ghcr.io/${{ github.repository }}/forced-aligner:latest
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Apply Helm charts
+      run: |
+        helm upgrade --install pebbi ./helm

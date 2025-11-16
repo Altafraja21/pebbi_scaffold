@@ -1,0 +1,17 @@
+{{- $root := . -}}
+{{- range $svc, $cfg := .Values.services }}
+{{- if $cfg.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+name: {{ printf "%s-%s" $root.Release.Name $svc }}
+spec:
+type: ClusterIP
+selector:
+app: {{ printf "%s-%s" $root.Release.Name $svc }}
+ports:
+- port: {{ $cfg.port }}
+targetPort: {{ $cfg.port }}
+protocol: TCP
+{{- end }}
+{{- end }}

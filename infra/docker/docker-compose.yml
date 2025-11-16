@@ -1,0 +1,175 @@
+version: '3.8'
+services:
+
+  # ---------- Datastores / infra ----------
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pebbi
+      POSTGRES_PASSWORD: pebbi_pass
+      POSTGRES_DB: pebbi_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pebbi-net
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - pebbi-net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - pebbi-net
+
+  # ---------- Monitoring ----------
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - pebbi-net
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    ports:
+      - "3000:3000"
+    networks:
+      - pebbi-net
+
+  # ---------- Core Services (dev mounts where you iterate) ----------
+  backend:
+    build:
+      context: ../../services/backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://pebbi:pebbi_pass@postgres:5432/pebbi_db
+      REDIS_URL: redis://redis:6379
+      QDRANT_HOST: qdrant
+    volumes:
+      - ../../services/backend:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    networks:
+      - pebbi-net
+
+  real-time-engine:
+    build:
+      context: ../../services/real-time-engine
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      REDIS_URL: redis://redis:6379
+      BACKEND_API: http://backend:4000
+    volumes:
+      - ../../services/real-time-engine:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - pebbi-net
+
+  memory-service:
+    build:
+      context: ../../services/memory-service
+      dockerfile: Dockerfile
+    environment:
+      QDRANT_HOST: qdrant
+    volumes:
+      - ../../services/memory-service:/usr/src/app
+    ports:
+      - "5100:5100"
+    depends_on:
+      - qdrant
+    networks:
+      - pebbi-net
+
+  # ---------- AI / Speech / Aligner (production-style but builds from local) ----------
+  ai-engine:
+    build:
+      context: ../../services/ai-engine
+      dockerfile: Dockerfile
+    environment:
+      MODE: production
+      QDRANT_HOST: qdrant
+      BACKEND_API: http://backend:4000
+    volumes:
+      - ../../services/ai-engine:/app  # keep for quick edits; optional in real prod
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+      - backend
+    networks:
+      - pebbi-net
+
+  stt-service:
+    build:
+      context: ../../services/stt-service
+      dockerfile: Dockerfile
+    environment:
+      MODE: production
+    volumes:
+      - ../../services/stt-service:/app
+    ports:
+      - "8100:8100"
+    networks:
+      - pebbi-net
+
+  tts-service:
+    build:
+      context: ../../services/tts-service
+      dockerfile: Dockerfile
+    environment:
+      MODE: production
+    volumes:
+      - ../../services/tts-service:/app
+    ports:
+      - "8200:8200"
+    networks:
+      - pebbi-net
+
+  forced-aligner:
+    build:
+      context: ../../services/forced-aligner
+      dockerfile: Dockerfile
+    environment:
+      MODE: production
+    volumes:
+      - ../../services/forced-aligner:/app
+    ports:
+      - "8300:8300"
+    networks:
+      - pebbi-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+
+networks:
+  pebbi-net:
+    driver: bridge

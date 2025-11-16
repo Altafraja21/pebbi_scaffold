@@ -1,0 +1,42 @@
+replicaCount: 2
+realtime:
+enabled: true
+image: ghcr.io/your/repo/real-time-engine:latest
+port: 5000
+resources:
+limits:
+cpu: "500m"
+memory: "512Mi"
+ai-engine:
+enabled: true
+image: ghcr.io/your/repo/ai-engine:latest
+port: 8000
+resources:
+limits:
+cpu: "2"
+memory: "4Gi"
+memory-service:
+enabled: true
+image: ghcr.io/your/repo/memory-service:latest
+port: 5100
+stt-service:
+enabled: true
+image: ghcr.io/your/repo/stt-service:latest
+port: 8100
+tts-service:
+enabled: true
+image: ghcr.io/your/repo/tts-service:latest
+port: 8200
+forced-aligner:
+enabled: true
+image: ghcr.io/your/repo/forced-aligner:latest
+port: 8300
+
+
+ingress:
+enabled: true
+host: api.pebbi.ai
+tls: true
+
+
+resources: {}
