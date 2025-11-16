@@ -35,8 +35,18 @@ services:
     dockerfilePath: services/tts-service/Dockerfile
     plan: free
 
-  - type: background
+  # FIXED: background → worker
+  - type: worker
     name: forced-aligner
     env: docker
     dockerfilePath: services/forced-aligner/Dockerfile
+    plan: free
+
+databases:
+  - name: pebbi-db
+    databaseName: pebbi
+    plan: free
+
+redis:
+  - name: pebbi-redis
     plan: free
