@@ -46,6 +46,3 @@ databases:
     databaseName: pebbi
     plan: free
 
-redis:
-  - name: pebbi-redis
-    plan: free
